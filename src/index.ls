@@ -1,15 +1,16 @@
 module.exports =
   pkg:
     name: 'gauge', version: '0.0.1'
-    # 仍需完整 d3: 明確指定 d3 版 base ( base 的 index.html 之後會改成 lite )
-    extend: {name: "@makechart/base", path: "d3/index.html"}
+    # lite: 不帶 d3 的 base. 補間改用 chart.anim, 可以逐格錄影 ( 見 @plotdb/chart utils/anim )
+    extend: {name: "@makechart/base", path: "lite/index.html"}
     dependencies: []
 
   init: ({root, context, pubsub}) ->
     pubsub.fire \init, mod: mod {context}
 
 mod = ({context}) ->
-  {d3,chart} = context
+  {chart} = context
+  {shape, anim: {join, ease}} = chart.utils
   sample: ->
     raw: [{value: Math.round(100 * Math.random!), max: 100, unit: \KG}]
     binding:
@@ -35,9 +36,9 @@ mod = ({context}) ->
     unit: {type: \N, name: "unit"}
   init: ->
     @tint = tint = new chart.utils.tint!
-    @arc = d3.arc!
+    @arc = shape.arc!
     @n = Object.fromEntries <[view number unit]>.map ~> [it, @layout.get-node(it)]
-    @g = Object.fromEntries <[view number unit]>.map ~> [it, d3.select(@layout.get-group(it))]
+    @g = Object.fromEntries <[view number unit]>.map ~> [it, @layout.get-group(it)]
     @v = number: 0, unit: '', run: 0
 
   parse: ->
@@ -83,64 +84,60 @@ mod = ({context}) ->
 
     offset = size * (1 - (1/Math.sqrt(2))) / 2
 
-    @g.view.selectAll \path.wedge .data [0,1]
-      ..exit!remove!
-      ..enter!append \path .attr \class, \wedge
-        .attr \transform, "translate(#{box.width/2},#{offset + box.height/2}) rotate(180)"
-    @g.view.selectAll \path.pin .data [0]
-      ..exit!remove!
-      ..enter!append \path .attr \class, \pin
-        .attr \transform, "translate(#{box.width/2} #{offset + box.height/2}) rotate(#{45 + (270 * percent)})"
-        .attr \d, "M0 #{size * (1 - @cfg.pin.length)}L0 #{size}"
-        .attr \stroke-linecap, \round
-    @g.view.selectAll \circle .data [0]
-      ..exit!remove!
-      ..enter!append \circle
-    @g.number.selectAll \text .data [0]
-      ..exit!remove!
-      ..enter!append \text
-    @g.unit.selectAll \text .data [0]
-      ..exit!remove!
-      ..enter!append \text
+    tween = (n, attrs) ~> @anim.tween n, attrs, {duration: 350}
+    one = (root, tag, cls, data) ->
+      j = join {root, tag, cls, data}
+      j.exit.map -> it.remove!
+      j
+    wj = one @g.view, \path, \wedge, [0,1]
+    wj.enter.map ->
+      it.setAttribute \transform, "translate(#{box.width/2},#{offset + box.height/2}) rotate(180)"
+    pj = one @g.view, \path, \pin, [0]
+    pj.enter.map ~>
+      it.setAttribute \transform, "translate(#{box.width/2} #{offset + box.height/2}) rotate(#{45 + (270 * percent)})"
+      it.setAttribute \d, "M0 #{size * (1 - @cfg.pin.length)}L0 #{size}"
+      it.setAttribute \stroke-linecap, \round
+    one @g.view, \circle, null, [0]
+    tn = one(@g.number, \text, null, [0]).nodes.0
+    tu = one(@g.unit, \text, null, [0]).nodes.0
 
-    @g.view.selectAll \path.wedge
-      .transition!duration 350
-      .attr \transform, "translate(#{box.width/2},#{offset + box.height/2}) rotate(180)"
-      .attrTween \d, (d,i) ~>
-        (t) ~>
-          t = d3.easeCubicInOut t
+    # 補間函式拿到的 t 已經套過一次 ease, 這裡再套一次 ( 同 d3 版 )
+    wj.nodes.map (n, i) ~>
+      tween n, do
+        transform: "translate(#{box.width/2},#{offset + box.height/2}) rotate(180)"
+        d: (t) ~>
+          t = ease.cubic-in-out t
           p = (@percent.cur - @percent.old) * t + @percent.old
           angle = p * ( Math.PI * 6 / 4 ) + Math.PI / 4
           @arc
             .startAngle if i == 0 => start else angle
             .endAngle  if i == 0 => angle else end
           @arc!
-      .attr \fill, (d,i) ~> @tint.get d
+        fill: @tint.get n.__data__
 
-    @g.view.selectAll \path.pin
-      .transition!duration 350
-      .attr \d, "M0 #{size * (1 - @cfg.pin.length)}L0 #{size}"
-      .attr \fill, \none
-      .attr \stroke, @cfg.pin.stroke
-      .attr \stroke-width, @cfg.pin.strokeWidth
-      .attrTween \transform, (d) ~> (t) ~>
-        t = d3.easeCubicInOut t
-        @percent.running-pin = p = (@percent.cur - @percent.old) * t + @percent.old
-        "translate(#{box.width/2} #{offset + box.height/2}) rotate(#{45 + (270 * p)})"
+    pj.nodes.map (n) ~>
+      tween n, do
+        d: "M0 #{size * (1 - @cfg.pin.length)}L0 #{size}"
+        fill: \none
+        stroke: @cfg.pin.stroke
+        "stroke-width": @cfg.pin.strokeWidth
+        transform: (t) ~>
+          t = ease.cubic-in-out t
+          @percent.running-pin = p = (@percent.cur - @percent.old) * t + @percent.old
+          "translate(#{box.width/2} #{offset + box.height/2}) rotate(#{45 + (270 * p)})"
 
-    @g.number.selectAll \text
-      .attr \font-size, "#{@size-rate.number * @r.number}em"
-      .attr \dominant-baseline, \hanging
-      .text Math.round(@v.run)
-
-    @g.unit.selectAll \text
-      .attr \font-size, "#{@size-rate.unit * @r.unit}em"
-      .text ~> @v.unit
-      .attr \dominant-baseline, \hanging
+    tn
+      ..setAttribute \font-size, "#{@size-rate.number * @r.number}em"
+      ..setAttribute \dominant-baseline, \hanging
+      ..textContent = Math.round(@v.run)
+    tu
+      ..setAttribute \font-size, "#{@size-rate.unit * @r.unit}em"
+      ..textContent = @v.unit
+      ..setAttribute \dominant-baseline, \hanging
     @start!
 
   tick: ->
-    @g.number.select \text .text ~>
-      @v.run = (@v.number - @v.run) * 0.1 + @v.run
-      if @v.run == @v.number => @stop!
-      return Math.round(@v.run)
+    # 每格往目標靠 10% ( 以格數計, 錄影時跟著 anim 的 step 走 )
+    @v.run = (@v.number - @v.run) * 0.1 + @v.run
+    if @v.run == @v.number => @stop!
+    if (n = @g.number.querySelector \text) => n.textContent = Math.round(@v.run)
