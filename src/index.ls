@@ -1,7 +1,8 @@
 module.exports =
   pkg:
     name: 'gauge', version: '0.0.1'
-    extend: {name: "@makechart/base"}
+    # 仍需完整 d3: 明確指定 d3 版 base ( base 的 index.html 之後會改成 lite )
+    extend: {name: "@makechart/base", path: "d3/index.html"}
     dependencies: []
 
   init: ({root, context, pubsub}) ->
@@ -92,7 +93,7 @@ mod = ({context}) ->
         .attr \transform, "translate(#{box.width/2} #{offset + box.height/2}) rotate(#{45 + (270 * percent)})"
         .attr \d, "M0 #{size * (1 - @cfg.pin.length)}L0 #{size}"
         .attr \stroke-linecap, \round
-    @g.view.selectAll \citcle .data [0]
+    @g.view.selectAll \circle .data [0]
       ..exit!remove!
       ..enter!append \circle
     @g.number.selectAll \text .data [0]
