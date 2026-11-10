@@ -26,6 +26,9 @@ mod = ({context}) ->
       unit-size: type: \number, default: 1, min: 0.5, max: 10, step: 0.1
     wedge:
       percent: type: \number, default: 0.7, min: 0, max: 1, step: 0.01
+    # 沒綁 max 欄位, 或該格是空的時用這個上限 ( 原本會當成 1, 數值大於 1 就直接滿格 )
+    range:
+      max: type: \number, default: 100, min: 0
     pin:
       stroke: type: \color, default: \#000
       strokeWidth: type: \number, default: 10
@@ -73,7 +76,10 @@ mod = ({context}) ->
     if @percent.running-pin? =>
       @percent.old = @percent.running-pin
       delete @percent.running-pin
-    @percent.cur = percent = ((d.value or 0) / (d.max or 1)) <? 1 >? 0
+    max = if typeof(d.max) == \number and isFinite(d.max) and d.max > 0 => d.max
+    else if (m = (@cfg.range or {}).max) > 0 => m
+    else 100
+    @percent.cur = percent = ((d.value or 0) / max) <? 1 >? 0
     start = Math.PI / 4
     end = Math.PI * 7 / 4
     box = @layout.get-box \view

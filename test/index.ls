@@ -1,13 +1,17 @@
 # gauge 的 test case ( @makechart/viewer 的 mctest )
 mk = (value, max = 100) -> raw: [{value, max, unit: \KG}], binding: {value: {key: \value}, max: {key: \max}, unit: {key: \unit}}
+# 沒綁 max: 上限用 config 的 range.max ( 預設 100 )
+nomax = (value) -> raw: [{value, unit: \KG}], binding: {value: {key: \value}, unit: {key: \unit}}
 # 數字每格往目標靠 10%, 約 400 格才完全停下. lite 版推 anim 的時鐘, d3 版等真實時間
 settle = (c, ctx) ->
   if c.anim => for i from 0 til 500 => c.anim.step 16
   else ctx.wait 9000
 mctest.suite do
   size: [400, 300]
-  data: {half: mk(50), low: mk(12), full: mk(100), over: mk(140)}
+  data: {half: mk(50), low: mk(12), full: mk(100), over: mk(140), nomax: nomax(72)}
   cases:
+    * name: "nomax", data: \nomax, steps: settle
+    * name: "nomax-range", data: \nomax, config: {range: {max: 200}}, steps: settle
     * name: "half", data: \half, steps: settle
     * name: "low", data: \low, steps: settle
     * name: "full", data: \full, steps: settle
