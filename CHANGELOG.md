@@ -1,5 +1,12 @@
 # Change Logs
 
+## v0.0.4
+
+ - fix bug: without a `max` binding ( or with an empty cell ), the maximum was taken as 1, so any value above 1
+   showed a full gauge. it now falls back to the new `range.max` config ( default 100 )
+ - add test cases for a missing `max`
+
+
 ## v0.0.3
 
  - extend the lite base ( `@makechart/base` `lite/index.html`, no d3 ): needs `@makechart/base` >= 0.2.0
