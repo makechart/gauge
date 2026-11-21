@@ -33,6 +33,12 @@ mod = ({context}) ->
       stroke: type: \color, default: \#000
       strokeWidth: type: \number, default: 10, desc: {en: "thickness of the needle ( px )", "zh-TW": "指針的粗細 ( px )"}
       length: type: \number, default: 0.33, step: 0.01, max: 1, min: 0, desc: {en: "length of the needle, measured inward from the outer edge, as a share of the radius ( 0 to 1 )", "zh-TW": "指針從外緣往內的長度，佔半徑的比例 ( 0 到 1 )"}
+  # 段落 ( tab ) 的說明, key 是段落的路徑. preset 的段落由 chart.utils.config.tabinfo 掛上來, 共用的 common 由核心補
+  tabinfo:
+    text: desc: {en: "size of the number and its unit in the middle of the gauge", "zh-TW": "儀表中間數字與單位的大小"}
+    wedge: desc: {en: "thickness of the gauge arc", "zh-TW": "儀表弧形的粗細"}
+    range: desc: {en: "the scale of the gauge: which value fills it up", "zh-TW": "儀表的刻度範圍：多少數值算滿格"}
+    pin: desc: {en: "look of the needle pointing at the value", "zh-TW": "指向數值的指針外觀"}
   dimension:
     value: {type: \R, name: "value"}
     max: {type: \R, name: "max"}
