@@ -22,17 +22,17 @@ mod = ({context}) ->
   }) <<<
     text:
       #enlarge: type: \boolean, default: false
-      number-size: type: \number, default: 3, min: 1, max: 10, step: 0.1
-      unit-size: type: \number, default: 1, min: 0.5, max: 10, step: 0.1
+      number-size: type: \number, default: 3, min: 1, max: 10, step: 0.1, desc: {en: "font size of the number ( em ); shrinks to fit when the width is too small", "zh-TW": "數字的字級 ( em )；寬度不夠時會自動縮小"}
+      unit-size: type: \number, default: 1, min: 0.5, max: 10, step: 0.1, desc: {en: "font size of the unit ( em ); shrinks to fit when the width is too small", "zh-TW": "單位的字級 ( em )；寬度不夠時會自動縮小"}
     wedge:
-      percent: type: \number, default: 0.7, min: 0, max: 1, step: 0.01
+      percent: type: \number, default: 0.7, min: 0, max: 1, step: 0.01, desc: {en: "inner radius of the arc as a share of the outer radius ( 0 to 1 ); larger makes a thinner arc", "zh-TW": "弧形內徑佔外徑的比例 ( 0 到 1 )；越大弧形越細"}
     # 沒綁 max 欄位, 或該格是空的時用這個上限 ( 原本會當成 1, 數值大於 1 就直接滿格 )
     range:
-      max: type: \number, default: 100, min: 0
+      max: type: \number, default: 100, min: 0, desc: {en: "the value of a full gauge, used when no max column is bound or its cell is empty", "zh-TW": "滿格代表的數值，沒有綁定 max 欄位或該格為空時使用"}
     pin:
       stroke: type: \color, default: \#000
-      strokeWidth: type: \number, default: 10
-      length: type: \number, default: 0.33, step: 0.01, max: 1, min: 0
+      strokeWidth: type: \number, default: 10, desc: {en: "thickness of the needle ( px )", "zh-TW": "指針的粗細 ( px )"}
+      length: type: \number, default: 0.33, step: 0.01, max: 1, min: 0, desc: {en: "length of the needle, measured inward from the outer edge, as a share of the radius ( 0 to 1 )", "zh-TW": "指針從外緣往內的長度，佔半徑的比例 ( 0 到 1 )"}
   dimension:
     value: {type: \R, name: "value"}
     max: {type: \R, name: "max"}
